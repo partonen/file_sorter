@@ -10,8 +10,7 @@ from pystray import MenuItem as item
 from PIL import Image, ImageDraw
 
 # Настройки
-SORT_INTERVAL = 86400  # 24 часа (по умолчанию)
-ENABLE_COMPRESSION = True
+DEFAULT_SORT_INTERVAL = 86400  # 24 часа по умолчанию
 LOG_FILE = "sort_log.txt"
 
 def log_action(message):
@@ -41,9 +40,13 @@ def sort_files(desktop_path, enable_compression=True):
         log_action(f"Error: {str(e)}")
 
 def auto_sort():
+    global next_run
     while True:
         sort_files(desktop_path.get(), enable_compression.get())
-        time.sleep(SORT_INTERVAL)
+        next_run = time.time() + sort_interval.get()
+        for _ in range(sort_interval.get(), 0, -1):
+            time.sleep(1)
+            update_timer()
 
 def start_auto_sort():
     thread = Thread(target=auto_sort, daemon=True)
@@ -77,17 +80,27 @@ def setup_tray():
     tray_icon = pystray.Icon("file_sorter", create_image(), menu=menu)
     tray_icon.run()
 
+def update_timer():
+    remaining = max(0, int(next_run - time.time()))
+    timer_label.config(text=f"Следующая сортировка через: {remaining} сек")
+    root.after(1000, update_timer)
+
 # GUI
 root = tk.Tk()
 root.title("Сортировщик файлов")
-root.geometry("400x200")
+root.geometry("400x250")
 root.protocol("WM_DELETE_WINDOW", lambda: root.withdraw())
 
 desktop_path = tk.StringVar()
 desktop_path.set(os.path.expanduser("~/Desktop"))
 
 enable_compression = tk.BooleanVar()
-enable_compression.set(ENABLE_COMPRESSION)
+enable_compression.set(True)
+
+sort_interval = tk.IntVar()
+sort_interval.set(DEFAULT_SORT_INTERVAL)
+
+next_run = time.time() + DEFAULT_SORT_INTERVAL
 
 frame = ttk.Frame(root, padding=10)
 frame.pack(fill=tk.BOTH, expand=True)
@@ -104,11 +117,20 @@ btn_browse.pack()
 chk_compress = ttk.Checkbutton(frame, text="Сжимать файлы в ZIP", variable=enable_compression)
 chk_compress.pack()
 
+interval_label = ttk.Label(frame, text="Интервал сортировки (сек):")
+interval_label.pack()
+interval_entry = ttk.Entry(frame, textvariable=sort_interval)
+interval_entry.pack()
+
+timer_label = ttk.Label(frame, text="Следующая сортировка через: 0 сек")
+timer_label.pack()
+
 btn_sort = ttk.Button(frame, text="Отсортировать сейчас", command=manual_sort)
 btn_sort.pack()
 
 btn_auto_sort = ttk.Button(frame, text="Запустить авто-сортировку", command=start_auto_sort)
 btn_auto_sort.pack()
 
+update_timer()
 Thread(target=setup_tray, daemon=True).start()
 root.mainloop()
