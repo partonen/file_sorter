@@ -11,13 +11,13 @@ from PIL import Image, ImageDraw
 
 # Настройки
 DEFAULT_SORT_INTERVAL = 86400  # 24 часа по умолчанию
-LOG_FILE = "sort_log.txt"
+DEFAULT_LOG_FILE = os.path.join(os.path.dirname(__file__), "sort_log.txt")
 
 def log_action(message):
-    with open(LOG_FILE, "a", encoding="utf-8") as log:
+    with open(log_file_path.get(), "a", encoding="utf-8") as log:
         log.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {message}\n")
 
-def sort_files(desktop_path, enable_compression=True):
+def sort_files(desktop_path, enable_compression=False):
     try:
         files = [f for f in os.listdir(desktop_path) if os.path.isfile(os.path.join(desktop_path, f))]
         for file in files:
@@ -41,17 +41,21 @@ def sort_files(desktop_path, enable_compression=True):
 
 def auto_sort():
     global next_run
-    while True:
+    while auto_sort_enabled.get():
         sort_files(desktop_path.get(), enable_compression.get())
         next_run = time.time() + sort_interval.get()
         for _ in range(sort_interval.get(), 0, -1):
+            if not auto_sort_enabled.get():
+                break
             time.sleep(1)
             update_timer()
 
 def start_auto_sort():
-    thread = Thread(target=auto_sort, daemon=True)
-    thread.start()
-    messagebox.showinfo("Автоматическая сортировка", "Автоматическая сортировка запущена!")
+    if auto_sort_enabled.get():
+        thread = Thread(target=auto_sort, daemon=True)
+        thread.start()
+        update_timer()
+        messagebox.showinfo("Автоматическая сортировка", "Автоматическая сортировка запущена!")
 
 def manual_sort():
     sort_files(desktop_path.get(), enable_compression.get())
@@ -81,21 +85,35 @@ def setup_tray():
     tray_icon.run()
 
 def update_timer():
-    remaining = max(0, int(next_run - time.time()))
-    timer_label.config(text=f"Следующая сортировка через: {remaining} сек")
-    root.after(1000, update_timer)
+    if auto_sort_enabled.get():
+        remaining = max(0, int(next_run - time.time()))
+        timer_label.config(text=f"Следующая сортировка через: {remaining} сек")
+        root.after(1000, update_timer)
+    else:
+        timer_label.config(text="Автосортировка отключена")
+
+def select_log_file():
+    file_path = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text files", "*.txt")])
+    if file_path:
+        log_file_path.set(file_path)
 
 # GUI
 root = tk.Tk()
 root.title("Сортировщик файлов")
-root.geometry("400x250")
+root.geometry("400x300")
 root.protocol("WM_DELETE_WINDOW", lambda: root.withdraw())
 
 desktop_path = tk.StringVar()
 desktop_path.set(os.path.expanduser("~/Desktop"))
 
+log_file_path = tk.StringVar()
+log_file_path.set(DEFAULT_LOG_FILE)
+
 enable_compression = tk.BooleanVar()
-enable_compression.set(True)
+enable_compression.set(False)
+
+auto_sort_enabled = tk.BooleanVar()
+auto_sort_enabled.set(False)
 
 sort_interval = tk.IntVar()
 sort_interval.set(DEFAULT_SORT_INTERVAL)
@@ -117,19 +135,26 @@ btn_browse.pack()
 chk_compress = ttk.Checkbutton(frame, text="Сжимать файлы в ZIP", variable=enable_compression)
 chk_compress.pack()
 
+chk_auto_sort = ttk.Checkbutton(frame, text="Включить автосортировку", variable=auto_sort_enabled, command=start_auto_sort)
+chk_auto_sort.pack()
+
 interval_label = ttk.Label(frame, text="Интервал сортировки (сек):")
 interval_label.pack()
 interval_entry = ttk.Entry(frame, textvariable=sort_interval)
 interval_entry.pack()
 
-timer_label = ttk.Label(frame, text="Следующая сортировка через: 0 сек")
+timer_label = ttk.Label(frame, text="Автосортировка отключена")
 timer_label.pack()
+
+log_label = ttk.Label(frame, text="Файл лога:")
+log_label.pack()
+log_entry = ttk.Entry(frame, textvariable=log_file_path, width=40)
+log_entry.pack()
+btn_log_browse = ttk.Button(frame, text="Выбрать лог-файл", command=select_log_file)
+btn_log_browse.pack()
 
 btn_sort = ttk.Button(frame, text="Отсортировать сейчас", command=manual_sort)
 btn_sort.pack()
-
-btn_auto_sort = ttk.Button(frame, text="Запустить авто-сортировку", command=start_auto_sort)
-btn_auto_sort.pack()
 
 update_timer()
 Thread(target=setup_tray, daemon=True).start()
