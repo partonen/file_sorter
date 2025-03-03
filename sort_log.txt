@@ -1,0 +1,12 @@
+[2025-03-03 15:55:05] Moved: Screenshot_1.jpg -> C:\Users\mikha/Desktop\jpg
+[2025-03-03 15:55:05] Archived: Screenshot_1.jpg -> C:\Users\mikha/Desktop\jpg\jpg.zip
+[2025-03-03 15:55:05] Moved: Screenshot_2.jpg -> C:\Users\mikha/Desktop\jpg
+[2025-03-03 15:55:05] Archived: Screenshot_2.jpg -> C:\Users\mikha/Desktop\jpg\jpg.zip
+[2025-03-03 15:55:05] Moved: Screenshot_3.jpg -> C:\Users\mikha/Desktop\jpg
+[2025-03-03 15:55:05] Archived: Screenshot_3.jpg -> C:\Users\mikha/Desktop\jpg\jpg.zip
+[2025-03-03 15:55:05] Moved: Screenshot_4.jpg -> C:\Users\mikha/Desktop\jpg
+[2025-03-03 15:55:05] Archived: Screenshot_4.jpg -> C:\Users\mikha/Desktop\jpg\jpg.zip
+[2025-03-03 15:55:05] Moved: Screenshot_5.jpg -> C:\Users\mikha/Desktop\jpg
+[2025-03-03 15:55:05] Archived: Screenshot_5.jpg -> C:\Users\mikha/Desktop\jpg\jpg.zip
+[2025-03-03 15:55:05] Moved: setup-ipsec-tunnel.webp -> C:\Users\mikha/Desktop\webp
+[2025-03-03 15:55:05] Archived: setup-ipsec-tunnel.webp -> C:\Users\mikha/Desktop\webp\webp.zip
